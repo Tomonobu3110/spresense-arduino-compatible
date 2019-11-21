@@ -26,14 +26,18 @@
 #include "gnss_tracker.h"
 #include "gnss_file.h"
 
-SDClass theSD;  /**< SDClass object */
-
 boolean BeginSDCard(void)
 {
   APP_PRINT_I("BeginSDCard() USE_SDHCI");
+  /*
   if (!theSD.begin()) {
     return false;
   }
+  */
+
+  /* Create a new directory */
+  Flash.mkdir("gnss_tracker/");
+  
   return true;
 }
 
@@ -42,14 +46,16 @@ int WriteBinary(const char* pBuff, const char* pName, unsigned long write_size, 
   unsigned long write_result = 0;
   File myFile;
 
-  if (theSD.exists("/") == false) {
+  /*
+  if (Flash.exists("/") == false) {
     return 0;
   }
-
+  */
+  
   if (write_size != 0)
   {
     /* Open file. */
-    myFile = theSD.open(pName, flag);
+    myFile = Flash.open(pName, flag);
 
     if (myFile == NULL)
     {
@@ -102,10 +108,10 @@ int ReadChar(char* pBuff, int BufferSize, const char* pName, int flag)
   File myFile;
 
   /* Open file. */
-  if (theSD.exists(pName) == false) {
+  if (Flash.exists(pName) == false) {
     return 0;
   }
-  myFile = theSD.open(pName, flag);
+  myFile = Flash.open(pName, flag);
   if (myFile == NULL)
   {
     /* if the file didn't open, print an error. */
@@ -140,10 +146,10 @@ int ReadChar(char* pBuff, int BufferSize, const char* pName, int flag)
 
 int Remove(const char* pName)
 {
-  return theSD.remove(pName);
+  return Flash.remove(pName);
 }
 
 boolean IsFileExist(const char* pName)
 {
-  return theSD.exists(pName);
+  return Flash.exists(pName);
 }

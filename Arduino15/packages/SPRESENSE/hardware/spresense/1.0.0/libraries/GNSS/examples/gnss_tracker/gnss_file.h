@@ -26,8 +26,8 @@
  * @brief Handling I/O operation on the SD card
  */
 
-/* include the SDHCI library */
-#include <SDHCI.h>
+/* include the Flash library */
+#include <Flash.h>
 
 /**
  * @brief Mount SD card.
@@ -85,4 +85,3 @@ int Remove(const char* pName);
 boolean IsFileExist(const char* pName);
 
 #endif
-

@@ -31,13 +31,22 @@
 #include "gnss_nmea.h"
 #include "gnss_file.h"
 
+/* Directory on flash */
+#define DATA_DIR_NAME    "gnss_tracker/"
+
 /* Config file */
-#define CONFIG_FILE_NAME    "tracker.ini"  /**< Config file name */
+#define CONFIG_FILE_NAME    DATA_DIR_NAME "tracker.ini"  /**< Config file name */
 #define CONFIG_FILE_SIZE    4096           /**< Config file size */
 
 /* Index file */
-#define INDEX_FILE_NAME    "index.ini"     /**< Index file name */
+#define INDEX_FILE_NAME    DATA_DIR_NAME "index.ini"     /**< Index file name */
 #define INDEX_FILE_SIZE    16              /**< Index file size */
+
+/* NMEA file */
+#define NMEA_FILE_NAME    DATA_DIR_NAME "%08d.txt"       /**< NMEA file name */
+
+/* BIN file */
+#define BIN_FILE_NAME    DATA_DIR_NAME "%08d.bin"        /**< BIN file name */      
 
 #define STRING_BUFFER_SIZE  128            /**< %String buffer size */
 #define NMEA_BUFFER_SIZE    128            /**< NMEA buffer size */
@@ -774,12 +783,12 @@ static int SetupPositioning(void)
     if (Parameter.NmeaOutFile == true)
     {
       /* Create a file name to store NMEA data. */
-      snprintf(FilenameTxt, sizeof(FilenameTxt), "%08d.txt", FileCount);
+      snprintf(FilenameTxt, sizeof(FilenameTxt), NMEA_FILE_NAME, FileCount);
     }
     if (Parameter.BinaryOut == true)
     {
       /* Create a file name to store binary data. */
-      snprintf(FilenameBin, sizeof(FilenameBin), "%08d.bin", FileCount);
+      snprintf(FilenameBin, sizeof(FilenameBin), BIN_FILE_NAME, FileCount);
     }
   }
 
