@@ -39,7 +39,7 @@
 #define CONFIG_FILE_SIZE    4096           /**< Config file size */
 
 /* Index file */
-#define INDEX_FILE_NAME    DATA_DIR_NAME "index.ini"     /**< Index file name */
+#define     DATA_DIR_NAME "index.ini"     /**< Index file name */
 #define INDEX_FILE_SIZE    16              /**< Index file size */
 
 /* NMEA file */
@@ -50,7 +50,7 @@
 
 #define STRING_BUFFER_SIZE  128            /**< %String buffer size */
 #define NMEA_BUFFER_SIZE    128            /**< NMEA buffer size */
-#define OUTPUT_FILENAME_LEN 16             /**< Output file name length */
+#define OUTPUT_FILENAME_LEN 32             /**< Output file name length */
 
 /* Default parameter. */
 #define DEFAULT_INTERVAL_SEC    1          /**< Default positioning interval in seconds*/
