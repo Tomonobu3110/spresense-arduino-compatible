@@ -39,7 +39,7 @@
 #define CONFIG_FILE_SIZE    4096           /**< Config file size */
 
 /* Index file */
-#define     DATA_DIR_NAME "index.ini"     /**< Index file name */
+#define INDEX_FILE_NAME    DATA_DIR_NAME "index.ini"     /**< Index file name */
 #define INDEX_FILE_SIZE    16              /**< Index file size */
 
 /* NMEA file */
