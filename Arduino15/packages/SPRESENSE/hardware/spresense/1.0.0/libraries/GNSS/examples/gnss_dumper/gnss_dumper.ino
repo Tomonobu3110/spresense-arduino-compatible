@@ -150,7 +150,7 @@ int PrintFileNumber(void)
 void DumpNmeaFile(int index)
 {
   /* Create file name. */
-  memset(FilenameTxt, 9, sizeof(FilenameTxt));
+  memset(FilenameTxt, 0, sizeof(FilenameTxt));
   snprintf(FilenameTxt, sizeof(FilenameTxt), NMEA_FILE_NAME, index);
   APP_PRINT(FilenameTxt);
   APP_PRINT("\n");
@@ -175,13 +175,12 @@ void DumpNmeaFile(int index)
   else
   {
     /* read file. */
-    int ch = 0;
-    char str[2];
-    while (0 <= ch) {
-      ch = myFile.read();
-      str[0] = (char)ch;
-      str[1] = 0;
-      APP_PRINT(str);
+    int len = 1; // dummy
+    char buf[128 + 1]; // +1 for centinel(\0)
+    memset(buf, 0, sizeof(buf));
+    while (0 < len) {
+      len = myFile.read(buf, sizeof(buf) - 1);
+      APP_PRINT(buf);
     }
     
     /* Close file. */
@@ -226,6 +225,7 @@ void setup()
   ledOff(PIN_LED1);
   ledOff(PIN_LED2);
   ledOff(PIN_LED3);
+  
   APP_PRINT("Done...\n");
 }
 
