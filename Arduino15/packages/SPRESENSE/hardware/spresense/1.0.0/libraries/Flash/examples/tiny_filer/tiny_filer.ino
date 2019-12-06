@@ -7,15 +7,18 @@
 #include <Arduino.h>
 #include <File.h>
 #include <Flash.h>
+#include <XModem.h>
 
 // const
-#define PROMPT "cmd('0':goto root, num:show, 'd'+num:delete)>"
+#define PROMPT "cmd('0':goto root, num:show, 'd'+num:delete, 'y'+num:Ymodem)>"
 #define MOUNT_POINT "/mnt/spif/"
 #define MAX_ENTRY_POINT 64
 #define MAX_PATH_LENGTH 64
 
 #define COMMAND_FLAG_SHOW ((uint32_t)(0x0000 << 16))
 #define COMMAND_FLAG_DEL  ((uint32_t)(0x0001 << 16))
+#define COMMAND_FLAG_DWLD ((uint32_t)(0x0010 << 16)) // Download w/ YModem
+#define COMMAND_FLAG_NONE ((uint32_t)(0x0100 << 16))
 #define COMMAND_FLAG_ERR  ((uint32_t)(0x1000 << 16))
 
 // structure
@@ -29,6 +32,8 @@ typedef struct {
 // global
 EntryPoint entryPoints[MAX_ENTRY_POINT]; /* entry point list */
 File current; /* current directory */
+
+XModem ymodem(&Serial, ModeYModem); /* YModem */
 
 // Print all file and directory names.
 // like 'ls' command
@@ -85,40 +90,70 @@ void printContents(File file) {
   Serial.println("-----");
 }
 
-// get command No from serial
+// Queue command from serial
 // upper 16 bit : flags
 //   0x 0000 xxxx : show   (COMMAND_FLAG_SHOW)
 //   0x 0001 xxxx : delete (COMMAND_FLAG_DEL)
-///  0x 1000 xxxx : error  (COMMAND_FLAG_ERR)
+//   0x 0100 xxxx : none   (COMMAND_FLAG_NONE)
+//   0x 1000 xxxx : error  (COMMAND_FLAG_ERR)
 // lower 16 bit : command No
-uint32_t GetCommand()
+uint32_t QueueCommand()
 {
   static char buf[64];
-  memset(buf, 0, sizeof(buf));
-  int idx = 0;
-  uint32_t retval = COMMAND_FLAG_ERR;
+  static int  idx = 0;
 
-  // get 1st character of command string
-  if (0 < Serial.available()) {
+  // clear buffer
+  if (0 == idx) { 
+      memset(buf, 0, sizeof(buf));
+  }
+
+  // read buffer
+  while (0 < Serial.available()) {
+    // queue
     char c = (char)Serial.read();
     Serial.println(c);
-    if ('0' <= c && c <= '9') {
-      retval = COMMAND_FLAG_SHOW;
-      buf[idx++] = c;  
+
+    // if ENTER key then parse command.
+    if ('\n' == c || '\r' == c) {
+      buf[idx] = 0;
+      uint32_t retval = ParseCommand(buf, idx);
+      idx = 0;
+      return retval;
     }
-    else if ('d' == c || 'D' == c) {
-      retval = COMMAND_FLAG_DEL;
-    }
+
+    // otherwise, just queue it.
+    buf[idx++] = c;
   }
   
-  // get remaining command string
-  while (0 < Serial.available()) {
-    buf[idx++] = (char)Serial.read();
-  }
-  buf[idx] = 0;
+  return COMMAND_FLAG_NONE;
+}
 
-  // string to number
-  return strtol(buf, NULL, 10) | retval;
+// Perse buffer to get command
+// upper 16 bit : flags
+//   0x 0000 xxxx : show   (COMMAND_FLAG_SHOW)
+//   0x 0001 xxxx : delete (COMMAND_FLAG_DEL)
+//   0x 0100 xxxx : none   (COMMAND_FLAG_NONE)
+//   0x 1000 xxxx : error  (COMMAND_FLAG_ERR)
+// lower 16 bit : command No
+uint32_t ParseCommand(const char* buffer, int length)
+{
+  // error check (just in case)
+  if (length <= 0) {
+    return COMMAND_FLAG_ERR;
+  }
+  
+  // get 1st character of command string
+  char c = (char)buffer[0];
+  if ('0' <= c && c <= '9') {
+    return strtol(buffer, NULL, 10) | COMMAND_FLAG_SHOW;
+  }
+  else if ('d' == c || 'D' == c) {
+    return strtol((const char*)(buffer + 1), NULL, 10) | COMMAND_FLAG_DEL;
+  }
+  else if ('y' == c || 'Y' == c) {
+    return strtol((const char*)(buffer + 1), NULL, 10) | COMMAND_FLAG_DWLD;
+  }
+  return COMMAND_FLAG_ERR;
 }
 
 // setup
@@ -139,8 +174,11 @@ void setup() {
 void loop() {
   if (0 < Serial.available()) {
     // get commad number
-    uint32_t cmd_no = GetCommand();
-
+    uint32_t cmd_no = QueueCommand();
+    if (0 < (COMMAND_FLAG_NONE & cmd_no)) {
+      return; // no command yet.
+    }
+    
     // execute command
     if (0 == cmd_no) {
       // goto root again.
@@ -185,10 +223,37 @@ void loop() {
           printDirectory(current);
         }
       }
-      // 
+      // Download file by YModem
+      else if (0 < (COMMAND_FLAG_DWLD & cmd_no)) {
+        uint32_t target = cmd_no & 0xffff;
+        Serial.print("Download(YModem) : ");
+        Serial.println(target);        
+        if (target < MAX_ENTRY_POINT && entryPoints[target].isvalid)
+        {
+          if (entryPoints[target].isdir) {
+            Serial.println("ERROR : this is directory.");
+          }
+          else {
+            // download file...
+            File f = Flash.open(entryPoints[target].path);
+            if (f) {
+              Serial.println("Download(YModel) start...");
+              ymodem.sendFile(f, "tracker.ini");
+              f.close();
+            } 
+            else {
+              Serial.print("ERROR : Cannot open file : ");
+              Serial.println(entryPoints[target].path);
+            }
+          }
+        }
+      }
+      // error
       else {
         Serial.print("invalid cmd number : ");
-        Serial.println(cmd_no);
+        Serial.print(cmd_no);
+        Serial.print(" / 0x");
+        Serial.println(cmd_no, HEX);
       }
     }
     
