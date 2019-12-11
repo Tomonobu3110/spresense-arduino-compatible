@@ -238,7 +238,7 @@ void loop() {
             File f = Flash.open(entryPoints[target].path);
             if (f) {
               Serial.println("Download(YModel) start...");
-              ymodem.sendFile(f, "tracker.ini");
+              ymodem.sendFile(f, entryPoints[target].path);
               f.close();
             } 
             else {
