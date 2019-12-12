@@ -687,7 +687,7 @@ static int SetupPositioning(void)
   int error_flag = 0;
 
   /* Set default Parameter. */
-  Parameter.SatelliteSystem  = eSatGpsGlonassQz1c;
+  Parameter.SatelliteSystem  = eSatGpsQz1cQz1S;
   Parameter.NmeaOutUart      = true;
   Parameter.NmeaOutFile      = true;
   Parameter.BinaryOut        = false;
