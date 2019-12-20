@@ -278,15 +278,16 @@ void loop() {
       PosFixflag = LedSet;
     }
     if (PosFixflag) {
+        //unsigned short sat = NavData.posSatelliteType;
+        unsigned short sat = NavData.satelliteType;
         // GPS, QZ_L1CA --> LED1
-        if (0 != (NavData.posSatelliteType & QZ_L1CA) ||
-            0 != (NavData.posSatelliteType & GPS)) {
+        if (0 != (sat & (GPS | QZ_L1CA))) {
           ledOn(PIN_LED1);
         } else {
           ledOff(PIN_LED1);  
         }
         // QZ_L1S --> LED2
-        if (0 != (NavData.posSatelliteType & QZ_L1S)) {
+        if (0 != (sat & QZ_L1S)) {
           ledOn(PIN_LED2);
         } else {
           ledOff(PIN_LED2);  
